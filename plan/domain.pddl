@@ -58,13 +58,12 @@
 
 (:action throw
     :parameters (?b ?p ?r ?q ?tball)
-    :precondition (and (Block ?b) (Robot ?r) (AtConf ?r ?q) (BallMotion ?b ?q1 ?tball ?q2)
-                       (AtPose ?b ?q1) (CanMove ?b) (Pose ?b ?p2)
-                       (exists (?r2 ?q2) (and (not (= ?r ?r2)) (AtConf ?r2 ?q2)))
+    :precondition (and (Block ?b) (Robot ?r) (Holding ?r b) (AtConf ?r ?q) (BallMotion ?b ?q1 ?tball ?q2)
+                       (CanMove ?b)(exists (?r2 ?q2) (and (not (= ?r ?r2)) (AtConf ?r2 ?q2)))
                   )
 
-    :effect (and (AtPose ?b ?p2)
-                 (not (AtPose ?b ?q1)) (not (CanMove ?b))
+    :effect (and (AtPose ?b ?q2)
+                 (HandEmpty ?r)(not (CanMove ?b))
                  (increase (total-cost) (Cost))))
 
   (:action pick

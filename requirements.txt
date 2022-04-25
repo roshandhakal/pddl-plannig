@@ -1,0 +1,16 @@
+
+# Core Requirements
+numpy
+scipy
+pyscreenshot
+pybullet
+
+# Plotting & Data Handling
+matplotlib
+
+# Testing & formatting
+pytest
+pytest-timeout
+pytest-html
+flake8
+vulture

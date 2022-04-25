@@ -240,15 +240,16 @@ def plan_motion(q1, q2, obstacles):
 
 ##################################################
 TAMPProblem = namedtuple(
-    "TAMPProblem", ["initial", "regions", "obstacles", "goal_conf", "goal_regions"]
+    "TAMPProblem", ["initial", "regions", "obstacles",  "goal_regions"]
 )
 
 GOAL_NAME = 'touchdown'
 TABLE_NAME = 'table'
 
-INITIAL_CONF = np.array([350, 450])
-INITIAL_CONF2 = np.array([200, 600])
-GOAL_CONF = INITIAL_CONF
+WR_INITIAL_CONF = np.array([350, 450])
+QB_INITIAL_CONF = np.array([200, 600])
+QB_GOAL_CONF = QB_INITIAL_CONF
+WR_GOAL_CONF = np.array([100, 50])
 REGIONS = {
 'field': [(10, 10), (450, 700)],
 GOAL_NAME: [(10, 10), (450, 100)],
@@ -268,29 +269,11 @@ envs = list(REGIONS.keys())
 envs.remove(GOAL_NAME)
 ENVIRONMENT_NAMES = envs
 
-def tight():
-    regions = {
-            "Field" : [(10, 10), (450, 700)],
-            "Defense Zone": [(10, 500), (450, 700)],
-            "teammate": [(330, 430), (370, 470)],
-            "TouchDown": [(10, 10), (450, 100)]
-            }
-    obstacles = []
-    robots = ["qb", "wr"]
-    confs = [INITIAL_CONF2, INITIAL_CONF]
-    initial_confs = dict(zip(robots, confs))
-    poses = [(200, 595)]
-    objects = ['ball1', 'ball2']
-    initial = TAMPState(initial_confs, {}, dict(zip(objects, poses)))
-    goal_regions = {objects[0]: "TouchDown"} 
-
-    return TAMPProblem(initial, regions, obstacles, GOAL_CONF, goal_regions)
-
-
 def run_ball():
     regions = {
             "Field" : [(10, 10), (450, 700)],
             "Defense Zone": [(10, 500), (450, 700)],
+            "teammate": [(330, 430), (370, 470)],
             "TouchDown": [(10, 10), (450, 100)]
             }
     obstacles = {
@@ -300,24 +283,16 @@ def run_ball():
     'opp5': [300, 250],
     'opp6': [150, 250],
     }
-    confs = [INITIAL_CONF, INITIAL_CONF2]
-    goals = ["teammate", "TouchDown"]
-    robots = ["ghost", "qb", "wr"]
-    confs = [INITIAL_CONF2, INITIAL_CONF2, INITIAL_CONF]
-    robots = ["wr", "qb"]
+    obstacles = []
+    robots = ["qb", "wr"]
+    confs = [QB_INITIAL_CONF, WR_INITIAL_CONF]
     initial_confs = dict(zip(robots, confs))
-    poses = [(350, 445)]
+    poses = [(200, 595)]
     objects = ['ball']
     initial = TAMPState(initial_confs, {}, dict(zip(objects, poses)))
-    goal_regions = {objects[0]: "TouchDown"} 
+    goal_regions = {objects[0] :"TouchDown"} 
 
-    return TAMPProblem(initial, regions, obstacles, GOAL_CONF, goal_regions)
+    return TAMPProblem(initial, regions, obstacles, goal_regions)
 
-def tight1():
-    prob1 = pass_ball()
-    prob2 = run_ball()
 
-    print(prob1 + prob2)
-    return prob1 + prob2
-
-PROBLEMS = [tight]
+PROBLEMS = [run_ball]

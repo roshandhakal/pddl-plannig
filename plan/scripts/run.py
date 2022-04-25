@@ -24,10 +24,11 @@ from examples.continuous_tamp.optimizer.optimizer import (
     cfree_motion_fn,
     get_optimize_fn,
 )
-from envprep.environments.blockworld.primitives import (
-    GOAL_CONF,
-    INITIAL_CONF,
-    INITIAL_CONF2,
+from plan.environments.blockworld.primitives import (
+    WR_GOAL_CONF,
+    QB_GOAL_CONF,
+    WR_INITIAL_CONF,
+    QB_INITIAL_CONF,
     get_pose_gen,
     collision_test,
     get_region_test,
@@ -110,29 +111,18 @@ def create_problem(tamp_problem, hand_empty=True, manipulate_cost=1.0):
             goal_literals.append(Or(*conditions))
 
 
-    for r, q in initial.robot_confs.items():
-        if r != "qb":
-            init += [
-            ("Robot", r),
-            ("CanMove", r),
-            ("Conf", q),
-            ("AtConf", r, q),
-            ("HandEmpty", r),
-        ]
-
-        else:
-            init += [
-            ("Robot", r),
-            ("Conf", q),
-            ("AtConf", r, q),
-            ("HandEmpty", r),
-        ]
-
-        if hand_empty:
-            goal_literals += [("HandEmpty", r)]
-        if tamp_problem.goal_conf is not None:
-            goal_literals += [("AtConf", r, q)]
-
+    init += [
+        ("Robot", "wr"),
+        ("CanMove", "wr"),
+        ("Conf", WR_INITIAL_CONF),
+        ("AtConf", "wr", WR_INITIAL_CONF),
+        ("HandEmpty", "wr"),
+        ("Robot", "qb"),
+        ("CanMove", "qb"),
+        ("Conf", QB_INITIAL_CONF),
+        ("AtConf", "qb", QB_INITIAL_CONF),
+        ("HandEmpty", "qb"),
+    ]
 
     goal = And(*goal_literals)
 
@@ -181,7 +171,7 @@ def pddlstream_from_tamp(
 def display_plan(
     tamp_problem, plan, display=True, save=False, time_step=0.005, sec_per_step=1e-20
 ):
-    from envprep.environments.blockworld.viewer import ContinuousTMPViewer
+    from plan.environments.blockworld.viewer import ContinuousTMPViewer
     COLORS = ['red', 'orange']
 
     if save:
@@ -268,7 +258,7 @@ def initialize(parser):
         "-n", "--number", default=2, type=int, help="The number of blocks"
     )
     parser.add_argument(
-        "-p", "--problem", default="tight", help="The name of the problem to solve"
+        "-p", "--problem", default="run_ball", help="The name of the problem to solve"
     )
     parser.add_argument(
         "-v", "--visualize", action="store_true", help="Visualizes graphs"
@@ -332,8 +322,7 @@ def main():
     }
 
     hierarchy = []
-    skeletons = [TIGHT_SKELETON] if args.skeleton else None
-    assert implies(args.skeleton, args.problem == "tight")
+    skeletons = None
     max_cost = INF
     constraints = PlanConstraints(skeletons=skeletons, exact=True, max_cost=max_cost)
     replan_actions = set()
@@ -360,7 +349,7 @@ def main():
             planner=planner,
             max_planner_time=INF,
             hierarchy=hierarchy,
-            max_time=10,
+            max_time=INF,
             max_iterations=INF,
             debug=False,
             verbose=True,

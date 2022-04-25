@@ -132,27 +132,8 @@ class ContinuousTMPViewer(object):
     def draw_region(self, region, color="moccasin", name=""):
         x1, x2 = region[0][0], region[1][0]
         y1, y2 = region[0][1], region[1][1]
-        names = ["storage room", "bedroom", "kitchen", "office room"]
-        # color = name
-        if name in names:
-            self.static.extend(
-                [  
-                    self.canvas.create_text((x1 + x2) / 2, (y1 + y2) * 0.9, text=name),
-                ]
-            )
-        elif name == "doorway" or name=="teammate":
-            self.static.extend(
-            []
-        )   
-        elif name == "living room":
-            self.static.extend(
-            [
-                self.canvas.create_rectangle(
-                    x1, y1, x2, y2, fill=color, outline="black", width=2
-                ),
-                self.canvas.create_text((x1 + x2) / 2, (y1 + y2) * 0.9, text=name),
-            ]
-        )
+        if name=="teammate":
+            self.static.extend([])
         else:
             self.static.extend(
                 [
@@ -174,36 +155,22 @@ class ContinuousTMPViewer(object):
                 self.draw_obstacle(obstacle, name=name)
 
     def draw_obstacle(self, obstacle, name=""):
-        rooms = ['kitchen', 'bedroom', 'closet', 'office room']
-        if name in rooms:
-            for obs in obstacle:
-                x1, x2 = obs[0][0], obs[1][0]
-                y1, y2 = obs[0][1], obs[1][1]
-                self.static.extend(
-                    [
-                        self.canvas.create_rectangle(
-                            x1, y1, x2, y2, fill="black", outline="black", width=2
-                        ),
-                        self.canvas.create_text((x1 + x2) / 2, (y1 + y2)/2, text=""),
-                    ]
-                )
-        else:
-            fixed_width = 60
-            x, y = obstacle[0], obstacle[1]
-            x1, x2, y1, y2 = (
-                x + fixed_width / 2,
-                x - fixed_width / 2,
-                y + 20,
-                y - 20,
-            )
-            self.static.extend(
-                [
-                    self.canvas.create_rectangle(
-                        x1, y1, x2, y2, fill="light blue", outline="black", width=2
-                    ),
-                    self.canvas.create_text((x1 + x2) / 2, (y1 + y2)/2, font=("Purisa", 12), text=name),
-                ]
-            )
+        fixed_width = 60
+        x, y = obstacle[0], obstacle[1]
+        x1, x2, y1, y2 = (
+            x + fixed_width / 2,
+            x - fixed_width / 2,
+            y + 20,
+            y - 20,
+        )
+        self.static.extend(
+            [
+                self.canvas.create_rectangle(
+                    x1, y1, x2, y2, fill="light blue", outline="black", width=2
+                ),
+                self.canvas.create_text((x1 + x2) / 2, (y1 + y2)/2, font=("Purisa", 12), text=name),
+            ]
+        )
 
 
     def draw_robot(self, x, y, name="", color="grey"):
