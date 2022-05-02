@@ -24,18 +24,16 @@
     :outputs (?t)
     :certified (and (Motion ?q1 ?t ?q2) (Traj ?t)))
 
-
-  (:stream s-ballmotion
-    :inputs (?b ?q1 ?p2)
-    :domain (and (Block ?b) (Conf ?q1) (Pose ?b ?p2))
-    :outputs (?tball)
-    :certified (and (BallMotion ?b ?q1 ?tball ?p2) (BallTraj ?tball))
-  )
-
   (:stream t-cfree
     :inputs (?b1 ?p1 ?b2 ?p2)
     :domain (and (Pose ?b1 ?p1) (Pose ?b2 ?p2))
     :certified (CFree ?b1 ?p1 ?b2 ?p2))
+
+(:stream t-movableboxfree
+    :inputs (?t ?b ?p)
+    :domain (and  (Pose ?b ?p) (Traj ?t))
+    :certified (MovableBoxFree ?t ?b ?p))
+
 
   ;(:stream t-ofreePose
   ;    :inputs (?b ?p ?o)

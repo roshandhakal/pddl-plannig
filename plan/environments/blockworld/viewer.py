@@ -46,8 +46,8 @@ class ContinuousTMPViewer(object):
         obstacles,
         tl_x=0,
         tl_y=0,
-        width=460,
-        height=710,
+        width=400,
+        height=400,
         title="Grid",
         background=BACKGROUND_COLOR,
     ):
@@ -110,35 +110,116 @@ class ContinuousTMPViewer(object):
             x - radius, y - radius, x + radius, y + radius, fill=color
         )
 
-    def draw_block(self, x, y, name="ball", color="blue"):
-        x1, x2, y1, y2 = (
-            x + BLOCK_WIDTH / 2,
-            x - BLOCK_WIDTH / 2,
-            y + BLOCK_WIDTH / 2,
-            y - BLOCK_WIDTH / 2,
-        )
-        self.dynamic.extend(
-            [
-                self.canvas.create_oval(
-                    x1, y1, x2, y2,
-                    fill="brown",
-                    outline="black",
-                    width=2,
-                ),   
-                self.canvas.create_text((x1 + x2) / 2, (y1 + y2)/2, font=("Purisa", 6), text=name),
-            ]
-        )
+    def draw_block(self, x, y, name="", color="blue"):
+        if name == "ghost":
+            self.dynamic.extend([])
+        else:
+            x1, x2, y1, y2 = (
+                x + BLOCK_WIDTH / 2,
+                x - BLOCK_WIDTH / 2,
+                y + BLOCK_WIDTH / 2,
+                y - BLOCK_WIDTH / 2,
+            )
+            self.dynamic.extend(
+                [
+                    self.canvas.create_rectangle(
+                        x1, y1, x2, y2, fill=color, outline="black", width=2
+                    ),
+                    self.canvas.create_text((x1 + x2) / 2, (y1 + y2)/2, font=("Purisa", 6), text=name),
+                ]
+            )
 
-    def draw_region(self, region, color="moccasin", name=""):
+    def draw_region(self, region, color="azure3", name=""):
         x1, x2 = region[0][0], region[1][0]
         y1, y2 = region[0][1], region[1][1]
-        if name=="teammate":
+        rooms = ["bedroom", "kitchen", "livingroom"]
+        boxes = ["box1", "box2", "box3", "box4"]
+        if name in rooms:
+            self.static.extend(
+                [ self.canvas.create_rectangle(
+                    x1, y1, x2, y2, fill="antiquewhite3", outline="black", width=2
+                ),]
+            )
+        elif name == "goal":
+             [
+                    self.canvas.create_rectangle(
+                        x1, y1, x2, y2+ 20, fill="cadetblue", outline="black", width=2
+                    ),
+                    self.canvas.create_text((x1 + x2) / 2, y2 - 10, text=name),
+                ]
+
+        elif name == "fakeenv":
             self.static.extend([])
+            
+        elif name in boxes:
+            self.static.extend(
+                [ self.canvas.create_rectangle(
+                    x1, y1, x2, y2, fill="azure1", outline="black", width=2
+                ),]
+            )
+        elif name == "restroom":
+            self.static.extend(
+                [ self.canvas.create_rectangle(
+                    x1, y1, x2, y2, fill="azure3", outline="black", width=2
+                ),]
+            )
+
+        elif name == "door":
+            self.static.extend(
+            [self.canvas.create_rectangle(
+                    x1, y1, x2, y2, fill="brown", outline="black", width=2
+                ),
+            self.canvas.create_oval(x1+20, y1+20, x1+30, y1+30, width=2, outline="black", fill="brown")
+            ]
+            
+        )
+        elif name == "bed":
+            self.static.extend(
+            [self.canvas.create_rectangle(
+                        x1, y1, x2, y2, fill="cornsilk3", outline="black", width=2
+                    ),
+                    self.canvas.create_text((x1 + x2) / 2, y2 - 10, text=name),]
+        )
+
+        elif name == "bathtub" or name == "toilet" or name == "br-vanity":
+            self.static.extend(
+            [self.canvas.create_rectangle(
+                        x1, y1, x2, y2, fill="white", outline="black", width=2
+                    ),
+                    self.canvas.create_text((x1 + x2) / 2, y2 - 10, text=name),]
+        )
+
+
+        elif name == "nightstand" or name == "dresser":
+            self.static.extend(
+            [self.canvas.create_rectangle(
+                        x1, y1, x2, y2, fill="burlywood4", outline="black", width=2
+                    ),
+                    self.canvas.create_text((x1 + x2) / 2, y2 - 10, text=name),]
+        ) 
+        elif name == "roundtable":
+            self.static.extend(
+            [ self.canvas.create_oval(
+                    x1-20, y1-20, x2+20, y2+20,
+                    fill="burlywood4",
+                    outline="black",
+                    width=2,
+                ),
+                self.canvas.create_text((x1 + x2) / 2, y2 - 10, text=name)]
+        ) 
+
+        elif name == "armchair":
+            self.static.extend(
+            [self.canvas.create_rectangle(
+                        x1, y1, x2, y2, fill="burlywood1", outline="black", width=2
+                    ),
+                    self.canvas.create_text((x1 + x2) / 2, y2 - 10, text=name),]
+        ) 
         else:
             self.static.extend(
                 [
                     self.canvas.create_rectangle(
-                        x1, y1, x2, y2, fill="green", outline="black", width=2
+                        x1, y1, x2, y2, fill="cadetblue", outline="black", width=2
                     ),
                     self.canvas.create_text((x1 + x2) / 2, y2 - 10, text=name),
                 ]
@@ -151,26 +232,22 @@ class ContinuousTMPViewer(object):
             self.draw_region(region, name=name)
 
         if len(self.obstacles) != 0:
-            for name, obstacle in self.obstacles.items():
-                self.draw_obstacle(obstacle, name=name)
+            for obstacle in self.obstacles:
+                self.draw_obstacle(obstacle, name="")
 
-    def draw_obstacle(self, obstacle, name=""):
-        fixed_width = 60
-        x, y = obstacle[0], obstacle[1]
-        x1, x2, y1, y2 = (
-            x + fixed_width / 2,
-            x - fixed_width / 2,
-            y + 20,
-            y - 20,
-        )
+    def draw_obstacle(self, obs, name=""):
+        rooms = ['kitchen', 'rest-room', 'closet', 'office room']
+        x1, x2 = obs[0][0], obs[1][0]
+        y1, y2 = obs[0][1], obs[1][1]
         self.static.extend(
             [
                 self.canvas.create_rectangle(
-                    x1, y1, x2, y2, fill="light blue", outline="black", width=2
+                    x1, y1, x2, y2, fill="azure1", outline="black", width=2
                 ),
-                self.canvas.create_text((x1 + x2) / 2, (y1 + y2)/2, font=("Purisa", 12), text=name),
+                self.canvas.create_text((x1 + x2) / 2, (y1 + y2)/2, text=""),
             ]
         )
+
 
 
     def draw_robot(self, x, y, name="", color="grey"):
@@ -178,53 +255,7 @@ class ContinuousTMPViewer(object):
         x2 = x - SUCTION_WIDTH
         y1 = y + SUCTION_WIDTH
         y2 = y - SUCTION_WIDTH
-        if name=="ghost":
-            self.dynamic.extend([])
-
-        elif name=="qb":
-            self.static.extend(
-                [
-                self.canvas.create_oval(
-                    x + SUCTION_HEAD,
-                    y + SUCTION_HEAD,
-                    x - SUCTION_HEAD,
-                    y - SUCTION_HEAD,
-                    fill=color,
-                    outline="black",
-                    width=2,
-                ),   
-                self.canvas.create_rectangle(
-                    x - SUCTION_WIDTH + 10,
-                    y + 15,
-                    x + SUCTION_WIDTH - 10,
-                    y + 1.5 * SUCTION_WIDTH,
-                    fill="gold",
-                    outline="black",
-                    width=2,
-                ),
-                self.canvas.create_text((x1 + x2) / 2, ((y + 15) + (y + 1.5 * SUCTION_WIDTH)) / 2, text=name),
-                self.canvas.create_rectangle(
-                    x - SUCTION_WIDTH + 5,
-                    y + SUCTION_WIDTH - 5,
-                    x - SUCTION_WIDTH,
-                    y - SUCTION_WIDTH + 15,
-                    fill=color,
-                    outline="black",
-                    width=2,
-                ),
-                self.canvas.create_rectangle(
-                    x + SUCTION_WIDTH - 5,
-                    y + SUCTION_WIDTH - 5,
-                    x + SUCTION_WIDTH,
-                    y - SUCTION_WIDTH + 15,
-                    fill=color,
-                    outline="black",
-                    width=2,
-                ),
-            ]
-            )
-        else:
-            self.dynamic.extend(
+        self.dynamic.extend(
             [
                 self.canvas.create_oval(
                     x + SUCTION_HEAD,
@@ -240,11 +271,11 @@ class ContinuousTMPViewer(object):
                     y + 15,
                     x + SUCTION_WIDTH - 10,
                     y + 1.5 * SUCTION_WIDTH,
-                    fill="gold",
+                    fill=color,
                     outline="black",
                     width=2,
                 ),
-                self.canvas.create_text((x1 + x2) / 2, ((y + 15) + (y + 1.5 * SUCTION_WIDTH)) / 2, text=name),
+                self.canvas.create_text((x1 + x2) / 2, ((y + 15) + (y + 1.5 * SUCTION_WIDTH)) / 2, text="rob"),
                 self.canvas.create_rectangle(
                     x - SUCTION_WIDTH + 5,
                     y + SUCTION_WIDTH - 5,
@@ -270,15 +301,15 @@ class ContinuousTMPViewer(object):
         self.clear_state()
         for robot, conf in state.robot_confs.items():
             x, y = conf
-            self.draw_robot(x, y, name=robot)
+            self.draw_robot(x, y)
         for block, pose in state.block_poses.items():
             a, b = pose
-            self.draw_block(a, b, color=colors[block])
+            self.draw_block(a, b, name=block, color=colors[block])
         for robot, holding in state.holding.items():
             block, grasp = holding
             pose = forward_kin(state.robot_confs[robot], grasp)
             c, d = pose
-            self.draw_block(c, d, color=colors[block])
+            self.draw_block(c, d, name=block, color=colors[block])
         self.tk.update()
 
     def clear_state(self):

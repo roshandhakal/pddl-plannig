@@ -25,26 +25,24 @@ from examples.continuous_tamp.optimizer.optimizer import (
     get_optimize_fn,
 )
 from plan.environments.blockworld.primitives import (
-    WR_GOAL_CONF,
-    QB_GOAL_CONF,
-    WR_INITIAL_CONF,
-    QB_INITIAL_CONF,
+    GOAL_CONF,
+    INITIAL_CONF,
     get_pose_gen,
     collision_test,
+    movable_object_test,
     get_region_test,
     plan_motion,
-    plan_ballmotion,
     PROBLEMS,
     GRASP,
     ENVIRONMENT_NAMES,
     distance_fn,
-    MOVE_COST
+    MOVE_COST,
+    duration_fn,
+    update_state,
 )
 from examples.continuous_tamp.primitives import (
     inverse_kin_fn,
     get_random_seed,
-    update_state,
-    duration_fn,
 )
 from pddlstream.algorithms.downward import get_cost_scale
 from pddlstream.algorithms.constraints import PlanConstraints, WILD
@@ -80,12 +78,18 @@ from pddlstream.utils import (
     inclusive_range,
     Profiler,
 )
-import sys
+
 
 ##################################################
-def create_problem(tamp_problem, hand_empty=True, manipulate_cost=1.0):
+def create_problem(tamp_problem, hand_empty=False, manipulate_cost=1.0):
     initial = tamp_problem.initial
+    assert not initial.holding
     init = [Equal(("Cost",), manipulate_cost), Equal((TOTAL_COST,), 0)]
+    boxes = ["box1", "box2", "box3", "box4"]
+    for b in initial.block_poses.keys():
+        for r in tamp_problem.regions:
+            if r not in boxes:
+                init.append(("Placeable", b, r))
 
     init += [("Obstacle", tamp_problem.obstacles)]
 
@@ -110,20 +114,18 @@ def create_problem(tamp_problem, hand_empty=True, manipulate_cost=1.0):
                 conditions += [("In", body, region)]
             goal_literals.append(Or(*conditions))
 
-
-    init += [
-        ("Robot", "wr"),
-        ("CanMove", "wr"),
-        ("Conf", WR_INITIAL_CONF),
-        ("AtConf", "wr", WR_INITIAL_CONF),
-        ("HandEmpty", "wr"),
-        ("Robot", "qb"),
-        ("CanMove", "qb"),
-        ("Conf", QB_INITIAL_CONF),
-        ("AtConf", "qb", QB_INITIAL_CONF),
-        ("HandEmpty", "qb"),
-    ]
-
+    for r, q in initial.robot_confs.items():
+        init += [
+            ("Robot", r),
+            ("CanMove", r),
+            ("Conf", q),
+            ("AtConf", r, q),
+            ("HandEmpty", r),
+        ]
+        if hand_empty:
+            goal_literals += [("HandEmpty", r)]
+        
+    #goal_literals += [("AtConf", "r0", GOAL_CONF)]
     goal = And(*goal_literals)
 
     return init, goal
@@ -144,8 +146,10 @@ def pddlstream_from_tamp(
         "s-region": from_gen_fn(get_pose_gen(tamp_problem.regions)),
         "s-ik": from_fn(inverse_kin_fn),
         "s-motion": from_fn(plan_motion),
-        "s-ballmotion": from_fn(plan_ballmotion),
         "t-region": from_test(get_region_test(tamp_problem.regions)),
+        "t-movableboxfree": from_test(
+            lambda *args: implies(collisions, not movable_object_test(*args))
+        ),
         "t-cfree": from_test(
             lambda *args: implies(collisions, not collision_test(*args))
         ),
@@ -172,7 +176,7 @@ def display_plan(
     tamp_problem, plan, display=True, save=False, time_step=0.005, sec_per_step=1e-20
 ):
     from plan.environments.blockworld.viewer import ContinuousTMPViewer
-    COLORS = ['red', 'orange']
+    COLORS = ['red', 'orange', 'blue']
 
     if save:
         example_name = "continuous_tamp"
@@ -238,9 +242,9 @@ MUTEXES = []
 ##################################################
 
 
-def set_deterministic(seed=0):
-    random.seed(seed=seed)
-    np.random.seed(seed=seed)
+def set_deterministic():
+    random.seed(0)
+    np.random.seed(0)
 
 
 def initialize(parser):
@@ -258,7 +262,7 @@ def initialize(parser):
         "-n", "--number", default=2, type=int, help="The number of blocks"
     )
     parser.add_argument(
-        "-p", "--problem", default="run_ball", help="The name of the problem to solve"
+        "-p", "--problem", default="tight", help="The name of the problem to solve"
     )
     parser.add_argument(
         "-v", "--visualize", action="store_true", help="Visualizes graphs"
@@ -267,9 +271,8 @@ def initialize(parser):
     args = parser.parse_args()
     print("Arguments:", args)
     np.set_printoptions(precision=2)
-    if args.deterministic:
-        set_deterministic()
-    print("Random seed:", get_random_seed())
+    set_deterministic()
+    #print("Random seed:", get_random_seed())
 
     problem_from_name = {fn.__name__: fn for fn in PROBLEMS}
     if args.problem not in problem_from_name:
@@ -305,11 +308,13 @@ def main():
     defer_fn = defer_shared
     stream_info = {
         "s-region": StreamInfo(defer_fn=defer_fn),
-        "s-ballmotion": StreamInfo(defer_fn=defer_fn),
         "s-grasp": StreamInfo(defer_fn=defer_fn),
         "s-ik": StreamInfo(defer_fn=get_defer_all_unbound(inputs="?g")),
         "s-motion": StreamInfo(defer_fn=get_defer_any_unbound()),
         "t-cfree": StreamInfo(
+            defer_fn=get_defer_any_unbound(), eager=False, verbose=False
+        ),
+        "t-movableboxfree": StreamInfo(
             defer_fn=get_defer_any_unbound(), eager=False, verbose=False
         ),
         "t-region": StreamInfo(eager=True, p_success=0),
@@ -322,7 +327,8 @@ def main():
     }
 
     hierarchy = []
-    skeletons = None
+    skeletons = [TIGHT_SKELETON] if args.skeleton else None
+    assert implies(args.skeleton, args.problem == "tight")
     max_cost = INF
     constraints = PlanConstraints(skeletons=skeletons, exact=True, max_cost=max_cost)
     replan_actions = set()

@@ -10,14 +10,13 @@
     (Grasp ?b ?g)
     (Conf ?q)
     (Traj ?t)
-    (BallTraj ?tball)
     (Contain ?b ?p ?s)
     (Kin ?b ?q ?p ?g)
     (Motion ?q1 ?t ?q2)
-    (BallMotion ?b ?q1 ?tball ?q2)
 
     ;(ObsFreePose ?b ?p ?o)
     (CFree ?b1 ?p1 ?b2 ?p2)
+    (MovableBoxFree ?t ?b ?p)
     (Placeable ?b ?s)
     (PoseCollision ?b1 ?p1 ?b2 ?p2)
     (TrajCollision ?t ?b2 ?p2)
@@ -49,22 +48,14 @@
     :precondition (and (Robot ?r) (Motion ?q1 ?t ?q2)
                        (AtConf ?r ?q1) (CanMove ?r)
                        (not (UnsafeTraj ?t))
+                       (forall (?b ?p) 
+                         (imply (and (Pose ?b ?p) (AtPose ?b ?p))
+                                (MovableBoxFree ?t ?b ?p)))
                   )
     :effect (and (AtConf ?r ?q2)
                  (CanManipulate ?r)
                  (not (AtConf ?r ?q1)) (not (CanMove ?r))
                  (increase (total-cost) (Dist ?q1 ?q2))))
-
-
-(:action throw
-    :parameters (?b ?p ?r ?q ?tball)
-    :precondition (and (Block ?b) (Robot ?r) (Holding ?r b) (AtConf ?r ?q) (BallMotion ?b ?q1 ?tball ?q2)
-                       (CanMove ?b)(exists (?r2 ?q2) (and (not (= ?r ?r2)) (AtConf ?r2 ?q2)))
-                  )
-
-    :effect (and (AtPose ?b ?q2)
-                 (HandEmpty ?r)(not (CanMove ?b))
-                 (increase (total-cost) (Cost))))
 
   (:action pick
     :parameters (?r ?b ?p ?g ?q)
