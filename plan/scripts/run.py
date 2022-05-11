@@ -356,7 +356,7 @@ def main():
             max_planner_time=INF,
             hierarchy=hierarchy,
             max_time=INF,
-            max_iterations=INF,
+            max_iterations=30,
             debug=False,
             verbose=True,
             unit_costs=args.unit,

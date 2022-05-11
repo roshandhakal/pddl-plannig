@@ -6,6 +6,12 @@
     :outputs (?p)
     :certified (and (Contain ?b ?p ?r) (Pose ?b ?p)))
 
+   (:stream t-cfree
+    :inputs (?b1 ?p1 ?b2 ?p2)
+    :domain (and (Pose ?b1 ?p1) (Pose ?b2 ?p2))
+    :certified (CFree ?b1 ?p1 ?b2 ?p2))
+
+
   (:stream s-grasp
     :inputs (?b)
     :domain (Block ?b)
@@ -24,12 +30,7 @@
     :outputs (?t)
     :certified (and (Motion ?q1 ?t ?q2) (Traj ?t)))
 
-  (:stream t-cfree
-    :inputs (?b1 ?p1 ?b2 ?p2)
-    :domain (and (Pose ?b1 ?p1) (Pose ?b2 ?p2))
-    :certified (CFree ?b1 ?p1 ?b2 ?p2))
-
-(:stream t-movableboxfree
+  (:stream t-movableboxfree
     :inputs (?t ?b ?p)
     :domain (and  (Pose ?b ?p) (Traj ?t))
     :certified (MovableBoxFree ?t ?b ?p))

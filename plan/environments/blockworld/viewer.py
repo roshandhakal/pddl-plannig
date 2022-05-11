@@ -148,7 +148,7 @@ class ContinuousTMPViewer(object):
                     self.canvas.create_text((x1 + x2) / 2, y2 - 10, text=name),
                 ]
 
-        elif name == "fakeenv":
+        elif name == "fakeenv1" or name == "fakeenv2":
             self.static.extend([])
             
         elif name in boxes:

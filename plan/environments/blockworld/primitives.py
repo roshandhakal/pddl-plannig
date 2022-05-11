@@ -27,7 +27,7 @@ BLOCK_WIDTH = 40
 BLOCK_LENGTH = BLOCK_WIDTH
 GROUND_Y = 0.0
 
-SUCTION_WIDTH = 60
+SUCTION_WIDTH = 30
 GRASP = -np.array([0, 0])
 CARRY_Y = 150
 APPROACH = -np.array([5, 5])
@@ -107,13 +107,13 @@ def movable_object_test(t, b, p):
     if b == "ghost":
         return False 
     box_interval = get_block_interval(b, p)
-    traj = [np.array([200, 200]), np.array([200, 150])]
-    for x in t:
-        if tuple(p) == tuple(x):
+    if t is None:
+        return False
+    for q in t:
+        robot_interval = get_robot_interval(q)
+        if interval_overlap(box_interval, robot_interval):
             return False
-        #robot_interval = get_robot_interval(q)
-        #if interval_overlap(box_interval, robot_interval):
-            #return True
+
     return False 
 
 def get_region_test(regions):
@@ -227,20 +227,13 @@ def get_collision_fn(obstacles):
 
 
 def plan_motion(q1, q2, obstacles):
-    t  = [q1, q2]
-    return (t, )
     if len(obstacles) == 0:
-        x1, y1 = q1 
-        if y1 > 100:
-            t = [q1, q2]
-            return (t,)
-        else:
-            t = [q1, q2]
-            return (t,)
+        t = [q1, q2]
+        return (t,)
     extend_fn = get_extend_fn(obstacles)
     sample_fn = get_sample_fn(obstacles)
     collision_fn = get_collision_fn(obstacles)
-    path = lazy_prm(q1, q2, sample_fn, extend_fn, collision_fn, num_samples=10000)
+    path = lazy_prm(q1, q2, sample_fn, extend_fn, collision_fn, num_samples=100000)
     return (path[0],)
 
 ##################################################
@@ -257,8 +250,7 @@ GOAL_CONF = np.array([200, 50])
 REGIONS = {
 'env':[(0, 0), (400, 400)],
 'goal': [(150, 0), (250, 50)],
-'fakeenv': [(0, 145), (400, 400)],
-'start':[(150, 350), (250, 400)],
+'start':[(150, 350), (250, 400)]
 }
 
 
@@ -273,10 +265,10 @@ def tight(n_blocks=2, n_goals=2, n_robots=1):
     confs = [INITIAL_CONF, np.array([-1, 1]) * INITIAL_CONF]
     robots = ["r{}".format(x) for x in range(n_robots)]
     initial_confs = dict(zip(robots, confs))
-    poses = [(180, 120), (230, 130), (200, 70)]
-    blocks = ["A","ghost"]
+    poses = [(200,50), (200, 70)]
+    blocks = ["A", "ghost"]
     initial = TAMPState(initial_confs, {}, dict(zip(blocks, poses)))
-    goal_regions = {"A" : "fakeenv", "B" : "fakeenv", "ghost" : "goal"}  # GROUND_NAME
+    goal_regions = {"ghost" : "goal"}  # GROUND_NAME
 
     return TAMPProblem(initial, REGIONS, OBSTACLES, GOAL_CONF, goal_regions)
 

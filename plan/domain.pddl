@@ -16,7 +16,7 @@
 
     ;(ObsFreePose ?b ?p ?o)
     (CFree ?b1 ?p1 ?b2 ?p2)
-    (MovableBoxFree ?t ?b ?p)
+    (MovableBoxFree ?q ?b ?p)
     (Placeable ?b ?s)
     (PoseCollision ?b1 ?p1 ?b2 ?p2)
     (TrajCollision ?t ?b2 ?p2)
